@@ -5,8 +5,8 @@ from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKe
 from aiogram.filters import CommandStart
 from aiogram.enums import ParseMode
 
-TOKEN = "8139783286:AAFA_G7JcvWaBMj7ZIUwISoSbRwnv8jZ8Rk"
-ADMIN_ID = 7663731929
+TOKEN = "YOUR_BOT_TOKEN"
+ADMIN_ID = 123456789
 
 bot = Bot(token=TOKEN, parse_mode=ParseMode.HTML)
 dp = Dispatcher()
@@ -37,7 +37,7 @@ async def init_db():
         """)
         await db.commit()
 
-# ================= Oʻzingizga qulay tilni tanlang=================
+# ================= TIL TANLASH =================
 def lang_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🇺🇿 O'zbek", callback_data="lang_uz")],
@@ -74,6 +74,36 @@ def main_menu():
 async def show_main_menu(message: Message):
     await message.answer("Asosiy menyu:", reply_markup=main_menu())
 
+# ================= PROMOKOD =================
+@dp.callback_query(F.data == "promokod")
+async def promokod(callback: CallbackQuery):
+    await callback.message.answer("Promo kodni yuboring:")
+
+@dp.message(F.text)
+async def check_promo(message: Message):
+    code = message.text.strip()
+    # Promo kodlarni va ularning pul summalarini belgilang
+    promo_codes = {
+        'Sheraliyev': 50000,
+        'Behruz': 40000,
+        'Sevara': 30000,
+        'Macho': 20000,
+        'Jahongir': 10000,
+        'Nobomap': 5000,
+    }
+
+    if code in promo_codes:
+        amount = promo_codes[code]
+        # Promo kod qabul qilinganda foydalanuvchiga info yuboriladi
+        await message.answer(f"✅ **Promo kod qabul qilindi!** Sizga {amount} so'm ajratildi. Olish uchun @sheraliyevadmin1 profiliga murojaat qiling.")
+    else:
+        await message.answer("❌ **Promo kod noto'g'ri.** Iltimos, to'g'ri promo kodni kiriting.")
+
+# ================= YORDAM =================
+@dp.callback_query(F.data == "help")
+async def help_callback(callback: CallbackQuery):
+    await callback.message.answer("Yordam uchun @sheraliyevadmin1 bilan bog'laning.")
+
 # ================= REKLAMA =================
 @dp.callback_query(F.data == "reklama")
 async def reklama(callback: CallbackQuery):
@@ -85,7 +115,7 @@ async def reklama(callback: CallbackQuery):
     ])
     await callback.message.answer("Reklama Paketlari:", reply_markup=reklama_menu)
 
-# ================= TO'LOV KARTALARI =================
+# ================= TO'LOV UCHUN KARTANI TANLASH =================
 @dp.callback_query(F.data == "reklama_4kun")
 async def reklama_payment(callback: CallbackQuery):
     payment_kb = InlineKeyboardMarkup(inline_keyboard=[
@@ -95,26 +125,23 @@ async def reklama_payment(callback: CallbackQuery):
     ])
     await callback.message.answer("To'lov uchun kartani tanlang:", reply_markup=payment_kb)
 
-# ================= TO'LOV UCHUN KARTANI TANLASH =================
-@dp.callback_query(F.data == "payment_uzcard")
-async def uzcard_payment(callback: CallbackQuery):
-    uzcard_payment_kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="📍 Uzcard: 5614683860045657", callback_data="paid_uzcard")],
-        [InlineKeyboardButton(text="💳 To'lov qildim", callback_data="paid_uzcard")],
-        [InlineKeyboardButton(text="🔙 Orqaga qaytish", callback_data="back_to_reklama")]
-    ])
-    await callback.message.answer("Ilmamos, kartangizni tanlang va to'lovni amalga oshiring:", reply_markup=uzcard_payment_kb)
-
-@dp.callback_query(F.data == "payment_humo")
-async def humo_payment(callback: CallbackQuery):
-    humo_payment_kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="📍 Humo: 9860167834405026", callback_data="paid_humo")],
-        [InlineKeyboardButton(text="💳 To'lov qildim", callback_data="paid_humo")],
-        [InlineKeyboardButton(text="🔙 Orqaga qaytish", callback_data="back_to_reklama")]
-    ])
-    await callback.message.answer("Ilmamos, kartangizni tanlang va to'lovni amalga oshiring:", reply_markup=humo_payment_kb)
-
 # ================= TO'LOVNI QABUL QILISH =================
+@dp.callback_query(F.data.startswith("payment_"))
+async def uzcard_payment(callback: CallbackQuery):
+    payment_type = callback.data.split("_")[1]
+    
+    if payment_type == "uzcard":
+        card_number = "5614683860045657"
+    elif payment_type == "humo":
+        card_number = "9860167834405026"
+
+    payment_kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=f"📍 {payment_type.upper()}: {card_number}", callback_data=f"paid_{payment_type}")],
+        [InlineKeyboardButton(text="💳 To'lov qildim", callback_data=f"paid_{payment_type}")],
+        [InlineKeyboardButton(text="🔙 Orqaga qaytish", callback_data="back_to_reklama")]
+    ])
+    await callback.message.answer(f"Ilmamos, kartangizni tanlang va to'lovni amalga oshiring:", reply_markup=payment_kb)
+
 @dp.callback_query(F.data.startswith("paid_"))
 async def paid(callback: CallbackQuery):
     user_id = int(callback.data.split("_")[1])
@@ -140,31 +167,6 @@ async def reject(callback: CallbackQuery):
     await bot.send_message(user_id, "❌ **To'lov topilmadi.**")
     await callback.answer("To'lov rad etildi.")
 
-# ================= PROMOKOD =================
-@dp.callback_query(F.data == "promokod")
-async def promokod(callback: CallbackQuery):
-    await callback.message.answer("Promo kodni yuboring:")
-
-    dp.message.register(check_promo)
-
-async def check_promo(message: Message):
-    code = message.text.strip()
-    # Promo kodlarni va ularning pul summalarini belgilang
-    promo_codes = {
-        'Sheraliyev': 50000,
-        'Behruz': 40000,
-        'Sevara': 30000,
-        'Macho': 20000,
-        'Jahongir': 10000,
-        'Nobomap': 5000,
-    }
-
-    if code in promo_codes:
-        amount = promo_codes[code]
-        await message.answer(f"✅ Promo kod qabul qilindi! Sizga {amount} so'm ajratildi.")
-    else:
-        await message.answer("❌ Promo kod noto'g'ri.")
-    
 # ================= MAIN FUNCTION =================
 async def main():
     await init_db()
