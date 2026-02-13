@@ -5,8 +5,8 @@ from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKe
 from aiogram.filters import CommandStart
 from aiogram.enums import ParseMode
 
-TOKEN = "YOUR_BOT_TOKEN"
-ADMIN_ID = 123456789
+TOKEN = "8139783286:AAFA_G7JcvWaBMj7ZIUwISoSbRwnv8jZ8Rk"
+ADMIN_ID = 7663731929
 
 bot = Bot(token=TOKEN, parse_mode=ParseMode.HTML)
 dp = Dispatcher()
@@ -37,7 +37,7 @@ async def init_db():
         """)
         await db.commit()
 
-# ================= TIL TANLASH =================
+# ================= Oʻzingizga qulay tilni tanlang =================
 def lang_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🇺🇿 O'zbek", callback_data="lang_uz")],
