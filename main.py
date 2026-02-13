@@ -5,8 +5,8 @@ from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKe
 from aiogram.filters import CommandStart
 from aiogram.enums import ParseMode
 
-TOKEN = "8139783286:AAFA_G7JcvWaBMj7ZIUwISoSbRwnv8jZ8Rk"
-ADMIN_ID = 7663731929
+TOKEN = "YOUR_BOT_TOKEN"
+ADMIN_ID = 123456789
 
 bot = Bot(token=TOKEN, parse_mode=ParseMode.HTML)
 dp = Dispatcher()
@@ -37,7 +37,7 @@ async def init_db():
         """)
         await db.commit()
 
-# ================= Oʻzingizga qulay tilni tanlang =================
+# ================= TIL TANLASH =================
 def lang_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🇺🇿 O'zbek", callback_data="lang_uz")],
@@ -55,49 +55,29 @@ async def set_lang(callback: CallbackQuery):
         await db.execute("INSERT OR REPLACE INTO users(user_id, lang) VALUES(?,?)",
                          (callback.from_user.id, lang))
         await db.commit()
-    if lang == "ru":
-        await callback.message.answer(f"Язык выбран: {lang}.")
-    else:
-        await callback.message.answer(f"Til tanlandi: {lang}.")
-    await show_main_menu(callback.message, lang)
+    await callback.message.answer(f"Til tanlandi: {lang}.")
+    await show_main_menu(callback.message)
 
 # ================= MAIN MENU =================
-def main_menu(lang):
-    menu = {
-        "uz": [
-            InlineKeyboardButton(text="📢 Reklama", callback_data="reklama"),
-            InlineKeyboardButton(text="🎨 Logo Dizayn", callback_data="logo"),
-            InlineKeyboardButton(text="🤖 Telegram Bot", callback_data="telegram_bot"),
-            InlineKeyboardButton(text="👥 Ishga Qabul", callback_data="ishga_qabul"),
-            InlineKeyboardButton(text="🎁 Promokod", callback_data="promokod"),
-            InlineKeyboardButton(text="💵 Pul Ishlash", callback_data="pul_ishlash"),
-            InlineKeyboardButton(text="💸 Chegirma", callback_data="chegirma"),
-            InlineKeyboardButton(text="❓ Yordam", callback_data="help")
-        ],
-        "ru": [
-            InlineKeyboardButton(text="📢 Реклама", callback_data="reklama"),
-            InlineKeyboardButton(text="🎨 Логотип Дизайн", callback_data="logo"),
-            InlineKeyboardButton(text="🤖 Telegram Бот", callback_data="telegram_bot"),
-            InlineKeyboardButton(text="👥 Прием на работу", callback_data="ishga_qabul"),
-            InlineKeyboardButton(text="🎁 Промокод", callback_data="promokod"),
-            InlineKeyboardButton(text="💵 Заработок", callback_data="pul_ishlash"),
-            InlineKeyboardButton(text="💸 Скидка", callback_data="chegirma"),
-            InlineKeyboardButton(text="❓ Помощь", callback_data="help")
-        ]
-    }
-    return InlineKeyboardMarkup(inline_keyboard=menu[lang])
+def main_menu():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="📢 Reklama", callback_data="reklama")],
+        [InlineKeyboardButton(text="🎨 Logo Dizayn", callback_data="logo")],
+        [InlineKeyboardButton(text="🤖 Telegram Bot", callback_data="telegram_bot")],
+        [InlineKeyboardButton(text="👥 Ishga Qabul", callback_data="ishga_qabul")],
+        [InlineKeyboardButton(text="🎁 Promokod", callback_data="promokod")],
+        [InlineKeyboardButton(text="💵 Pul Ishlash", callback_data="pul_ishlash")],
+        [InlineKeyboardButton(text="💸 Chegirma", callback_data="chegirma")],
+        [InlineKeyboardButton(text="❓ Yordam", callback_data="help")]
+    ])
 
-async def show_main_menu(message: Message, lang):
-    await message.answer("Asosiy menyu:", reply_markup=main_menu(lang))
+async def show_main_menu(message: Message):
+    await message.answer("Asosiy menyu:", reply_markup=main_menu())
 
 # ================= PROMOKOD =================
 @dp.callback_query(F.data == "promokod")
 async def promokod(callback: CallbackQuery):
-    lang = await get_user_lang(callback.from_user.id)
-    if lang == "ru":
-        await callback.message.answer("Отправьте промокод:")
-    else:
-        await callback.message.answer("Promo kodni yuboring:")
+    await callback.message.answer("Promo kodni yuboring:")
 
 @dp.message(F.text)
 async def check_promo(message: Message):
@@ -112,57 +92,38 @@ async def check_promo(message: Message):
         'Nobomap': 5000,
     }
 
-    lang = await get_user_lang(message.from_user.id)
-
     if code in promo_codes:
         amount = promo_codes[code]
-        if lang == "ru":
-            await message.answer(f"✅ **Промокод принят!** Вам начислено {amount} сум. Для получения обратитесь к @sheraliyevadmin1.")
-        else:
-            await message.answer(f"✅ **Promo kod qabul qilindi!** Sizga {amount} so'm ajratildi. Olish uchun @sheraliyevadmin1 profiliga murojaat qiling.")
+        # Promo kod qabul qilinganda foydalanuvchiga info yuboriladi
+        await message.answer(f"✅ **Promo kod qabul qilindi!** Sizga {amount} so'm ajratildi. Olish uchun @sheraliyevadmin1 profiliga murojaat qiling.")
     else:
-        if lang == "ru":
-            await message.answer("❌ **Неверный промокод.** Пожалуйста, введите правильный промокод.")
-        else:
-            await message.answer("❌ **Promo kod noto'g'ri.** Iltimos, to'g'ri promo kodni kiriting.")
+        await message.answer("❌ **Promo kod noto'g'ri.** Iltimos, to'g'ri promo kodni kiriting.")
 
 # ================= YORDAM =================
 @dp.callback_query(F.data == "help")
 async def help_callback(callback: CallbackQuery):
-    lang = await get_user_lang(callback.from_user.id)
-    if lang == "ru":
-        await callback.message.answer("Для помощи свяжитесь с @sheraliyevadmin1.")
-    else:
-        await callback.message.answer("Yordam uchun @sheraliyevadmin1 bilan bog'laning.")
+    await callback.message.answer("Yordam uchun @sheraliyevadmin1 bilan bog'laning.")
 
 # ================= REKLAMA =================
 @dp.callback_query(F.data == "reklama")
 async def reklama(callback: CallbackQuery):
-    lang = await get_user_lang(callback.from_user.id)
     reklama_menu = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text=f"4 kunlik - 20 000 so'm", callback_data="reklama_4kun")],
-        [InlineKeyboardButton(text=f"1 hafta - 30 000 so'm", callback_data="reklama_1hafta")],
-        [InlineKeyboardButton(text=f"2 hafta - 50 000 so'm", callback_data="reklama_2hafta")],
-        [InlineKeyboardButton(text=f"1 oy - 70 000 so'm", callback_data="reklama_1oy")]
+        [InlineKeyboardButton(text="4 kunlik - 20 000 so'm", callback_data="reklama_4kun")],
+        [InlineKeyboardButton(text="1 hafta - 30 000 so'm", callback_data="reklama_1hafta")],
+        [InlineKeyboardButton(text="2 hafta - 50 000 so'm", callback_data="reklama_2hafta")],
+        [InlineKeyboardButton(text="1 oy - 70 000 so'm", callback_data="reklama_1oy")]
     ])
-    if lang == "ru":
-        await callback.message.answer("Пакеты рекламы:", reply_markup=reklama_menu)
-    else:
-        await callback.message.answer("Reklama Paketlari:", reply_markup=reklama_menu)
+    await callback.message.answer("Reklama Paketlari:", reply_markup=reklama_menu)
 
 # ================= TO'LOV UCHUN KARTANI TANLASH =================
 @dp.callback_query(F.data == "reklama_4kun")
 async def reklama_payment(callback: CallbackQuery):
-    lang = await get_user_lang(callback.from_user.id)
     payment_kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="💳 Uzcard", callback_data="payment_uzcard")],
         [InlineKeyboardButton(text="💳 Humo", callback_data="payment_humo")],
         [InlineKeyboardButton(text="🔙 Orqaga qaytish", callback_data="back_to_zakazlar")]
     ])
-    if lang == "ru":
-        await callback.message.answer("Выберите карту для оплаты:", reply_markup=payment_kb)
-    else:
-        await callback.message.answer("To'lov uchun kartani tanlang:", reply_markup=payment_kb)
+    await callback.message.answer("To'lov uchun kartani tanlang:", reply_markup=payment_kb)
 
 # ================= TO'LOVNI QABUL QILISH =================
 @dp.callback_query(F.data.startswith("payment_"))
@@ -205,15 +166,6 @@ async def reject(callback: CallbackQuery):
     user_id = int(callback.data.split("_")[1])
     await bot.send_message(user_id, "❌ **To'lov topilmadi.**")
     await callback.answer("To'lov rad etildi.")
-
-# ================= USER LANG =================
-async def get_user_lang(user_id):
-    async with aiosqlite.connect("database.db") as db:
-        cursor = await db.execute("SELECT lang FROM users WHERE user_id=?", (user_id,))
-        lang = await cursor.fetchone()
-        if lang:
-            return lang[0]
-        return "uz"  # default language is uz
 
 # ================= MAIN FUNCTION =================
 async def main():
