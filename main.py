@@ -55,14 +55,8 @@ async def set_lang(callback: CallbackQuery):
         await db.execute("INSERT OR REPLACE INTO users(user_id, lang) VALUES(?,?)",
                          (callback.from_user.id, lang))
         await db.commit()
-
-    # Tilga asoslangan menyu
-    if lang == "uz":
-        await callback.message.answer(f"Til tanlandi: O'zbek.")
-        await show_main_menu(callback.message, lang)
-    else:
-        await callback.message.answer(f"Язык выбран: Русский.")
-        await show_main_menu(callback.message, lang)
+    await callback.message.answer(f"Til tanlandi: {lang}.")
+    await show_main_menu(callback.message, lang)
 
 # ================= MAIN MENU =================
 def main_menu(lang):
